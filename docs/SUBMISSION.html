@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ChapterChat — Official Project Submission | Nexconn Build Challenge 2026</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    @page {
+      size: A4;
+      margin: 20mm 18mm 20mm 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: #231f1c;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header-banner {
+      border-bottom: 2px solid #c45d3e;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 24pt;
+      color: #1b1816;
+      line-height: 1.15;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 11pt;
+      color: #c45d3e;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #faede9;
+      color: #c45d3e;
+      border-radius: 999px;
+      font-size: 9pt;
+      font-weight: 600;
+      border: 1px solid rgba(196, 93, 62, 0.25);
+    }
+
+    h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 14pt;
+      color: #1b1816;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #eae2d3;
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #2c2724;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin-bottom: 8px;
+      color: #38332f;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px 0;
+      font-size: 9.5pt;
+    }
+
+    .info-table td, .info-table th {
+      padding: 6px 10px;
+      border: 1px solid #eae2d3;
+    }
+
+    .info-table th {
+      background: #fbf9f5;
+      color: #736961;
+      font-weight: 600;
+      text-align: left;
+      width: 28%;
+    }
+
+    .info-table td {
+      background: #ffffff;
+      color: #1b1816;
+    }
+
+    .highlight-box {
+      background: #fdfaf4;
+      border-left: 3px solid #c45d3e;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 10pt;
+    }
+
+    .sdk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .sdk-item {
+      background: #fdfcf9;
+      border: 1px solid #eae2d3;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .sdk-item strong {
+      display: block;
+      color: #c45d3e;
+      font-size: 10pt;
+      margin-bottom: 2px;
+    }
+
+    .sdk-item p {
+      font-size: 9pt;
+      margin: 0;
+      color: #554e48;
+    }
+
+    code {
+      font-family: monospace;
+      background: #f2ece4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 9pt;
+      color: #a94b2f;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid #eae2d3;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5pt;
+      color: #736961;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-banner">
+    <div>
+      <h1>ChapterChat</h1>
+      <div class="subtitle">Real-Time Keepsake Studio Hub • Powered by Nexconn Chat SDK</div>
+    </div>
+    <div style="text-align: right;">
+      <span class="badge">Nexconn Build Challenge 2026</span>
+      <div style="font-size: 8.5pt; color: #736961; margin-top: 4px;">Official Submission Document</div>
+    </div>
+  </div>
+
+  <table class="info-table">
+    <tr>
+      <th>Project Title</th>
+      <td><strong>ChapterChat — Real-Time Keepsake Studio Hub</strong></td>
+    </tr>
+    <tr>
+      <th>Track Selection</th>
+      <td><strong>Marketplace & Support</strong> (also applicable to Workplace / Open Innovation)</td>
+    </tr>
+    <tr>
+      <th>Production Partner</th>
+      <td><strong>the Chapter Co.</strong> (<a href="https://thechapterco.in" style="color:#c45d3e;">thechapterco.in</a> — Personalized Illustrated Keepsakes)</td>
+    </tr>
+    <tr>
+      <th>Nexconn App Key</th>
+      <td><code>z3v5yqkbzet10</code> (Singapore Data Center: <code>api.sg-light-api.com</code>)</td>
+    </tr>
+    <tr>
+      <th>SDK Packages</th>
+      <td><code>@nexconn/chat</code> (^26.5.1), <code>@nexconn/engine</code> (^26.5.1)</td>
+    </tr>
+    <tr>
+      <th>GitHub Repository</th>
+      <td><a href="https://github.com/hemangkhandelwal1/paperboat-nexconn" style="color:#c45d3e;">https://github.com/hemangkhandelwal1/paperboat-nexconn</a> (Public)</td>
+    </tr>
+    <tr>
+      <th>Tech Stack</th>
+      <td>React 19, Vite 7, Node.js, Express, Nexconn Chat & Engine SDKs</td>
+    </tr>
+  </table>
+
+  <h2>1. Problem Statement & Why ChapterChat Was Built</h2>
+  <p>
+    <strong>the Chapter Co.</strong> (<a href="https://thechapterco.in" style="color:#c45d3e;">thechapterco.in</a>) crafts bespoke, hand-painted keepsake storybooks from real customer memories, family milestones, and wedding celebrations across India. Each book involves 2 to 4 weeks of high-touch, iterative collaboration between families and in-house illustrators:
+  </p>
+  <ul>
+    <li>Families submit dozens of intimate photos and memories.</li>
+    <li>Studio artists hand-sketch and paint multi-spread gouache layouts.</li>
+    <li>Clients review proofs, request revisions, and officially approve spreads before Japanese layflat archival binding.</li>
+  </ul>
+
+  <div class="highlight-box">
+    <strong>The Operational Bottleneck:</strong> Historically, this took place over fragmented WhatsApp chats and email threads. High-resolution reference photos were lost in camera rolls, revision feedback was ambiguous (<em>"Can you fix page 3?"</em>), and sign-offs were scattered, creating costly production delays.
+  </div>
+
+  <p>
+    <strong>ChapterChat solves this by establishing a dedicated real-time collaboration harbor for every storybook order</strong>, uniting client families and studio illustrators in an elegant, structured workspace.
+  </p>
+
+  <h2>2. Nexconn Chat SDK Deep Integration</h2>
+  <p>ChapterChat integrates 10+ core primitives of the Nexconn Communication Platform under App Key <code>z3v5yqkbzet10</code>:</p>
+
+  <div class="sdk-grid">
+    <div class="sdk-item">
+      <strong>1. Dynamic Token Authentication</strong>
+      <p>Secure server-side HMAC-SHA1 signature generation requesting access tokens via <code>POST /v4/auth/access-token/issue</code>.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>2. Dedicated Group Channels</strong>
+      <p>Every storybook commission spins up an isolated room: <code>tcc-tcc-{orderId}</code> using <code>GroupChannel</code> and <code>/v4/group-channel/create</code>.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>3. Real-Time Message Pipeline</strong>
+      <p>Messages dispatched via <code>SendTextMessageParams</code> & <code>channel.sendMessage()</code>, caught in real-time by <code>NCEngine.addMessageHandler()</code>.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>4. Inline Spread Proofing Cards</strong>
+      <p>Hand-painted watercolor spreads are delivered directly in the message stream with instant inspection modals.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>5. Message Reactions & Feedback</strong>
+      <p>Instant emotional and design feedback (<code>❤️ Love it</code>, <code>🔄 Needs tweak</code>, <code>🎨 Color note</code>) via the Nexconn reaction API.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>6. One-Click Print Sign-Off</strong>
+      <p>Clients click <code>✅ Approve for Print</code> to broadcast official approval records and update studio print readiness counters.</p>
+    </div>
+    <div class="sdk-item">
+      <strong>7. ChapterBot AI Studio Copilot</strong>
+      <p>Parses chat conversations into structured, prioritized action briefs for illustrators (Likeness, Lighting, Typography).</p>
+    </div>
+    <div class="sdk-item">
+      <strong>8. Production Milestone Tracking</strong>
+      <p>Visual 5-step lifecycle tracking from Photo Intake to Character Sketching, Proofing, and Doorstep Dispatch.</p>
+    </div>
+  </div>
+
+  <h2>3. User Experience & Design Polish (50% Weight)</h2>
+  <ul>
+    <li><strong>Brand-Aligned Aesthetic:</strong> Custom palette reflecting the warm literary feel of The Chapter Co., paired with Fraunces serif headings and Inter sans body font.</li>
+    <li><strong>1-Click Role Switching:</strong> Judges can seamlessly toggle between <strong>Client View</strong> (Meera & Rohan) and <strong>Lead Illustrator View</strong> (Pooja @ Studio) to test both sides of the collaborative workflow.</li>
+    <li><strong>Zero-Latency Interaction:</strong> Fast local optimistic updates backed by Nexconn Global Edge network connectivity.</li>
+  </ul>
+
+  <h2>4. Business Viability & Market Traction (20% Weight)</h2>
+  <ul>
+    <li><strong>Real Operating Company:</strong> Unlike generic demo apps, ChapterChat is engineered for an operating business with existing daily active users and paid orders.</li>
+    <li><strong>Immediate SDK Usage:</strong> Real client and illustrator traffic logged directly under Nexconn App Key <code>z3v5yqkbzet10</code>.</li>
+    <li><strong>Commercial Scalability:</strong> Ready to package as a SaaS coordination plugin for bespoke album artisans, wedding photographers, and boutique publishers globally.</li>
+  </ul>
+
+  <h2>5. Submission Deliverables Summary</h2>
+  <ul>
+    <li><strong>Public GitHub Repository:</strong> <a href="https://github.com/hemangkhandelwal1/paperboat-nexconn" style="color:#c45d3e;">https://github.com/hemangkhandelwal1/paperboat-nexconn</a></li>
+    <li><strong>Nexconn App Key:</strong> <code>z3v5yqkbzet10</code></li>
+    <li><strong>Local Verification URL:</strong> <code>http://localhost:8787</code> (Commands: <code>npm run build && npm start</code>)</li>
+    <li><strong>Demo Video URL:</strong> Submitted via hackathon portal link.</li>
+  </ul>
+
+  <div class="footer">
+    <span>ChapterChat • Built for the Nexconn Build Challenge 2026</span>
+    <span>In Partnership with the Chapter Co. (thechapterco.in)</span>
+  </div>
+
+</body>
+</html>
