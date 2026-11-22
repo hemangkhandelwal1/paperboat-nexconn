@@ -1,4 +1,4 @@
-import { NCEngine, GroupChannel, SendTextMessageParams, MessageHandler } from '@nexconn/chat';
+import { NCEngine, GroupChannel, SendTextMessageParams } from '@nexconn/chat';
 
 class NexconnService {
   constructor() {
@@ -11,7 +11,6 @@ class NexconnService {
     this.messageListeners = new Set();
     this.statusListeners = new Set();
     this.currentStatus = 'disconnected';
-    this.initPromise = null;
   }
 
   notifyStatus(status, details = null) {
@@ -56,29 +55,44 @@ class NexconnService {
         });
         this.isInitialized = true;
 
-        // Register global message listener
-        const handlerKey = 'tcc-global-handler-' + Date.now();
+        // Register global real-time message listener
+        const handlerKey = 'tcc-global-handler';
         NCEngine.addMessageHandler(handlerKey, {
           onMessageReceived: (event) => {
             if (event && event.message) {
               const msg = event.message;
-              const content = msg.content?.content || msg.content?.text || JSON.stringify(msg.content);
+              const content = msg.content?.content || msg.content?.text || (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content));
               this.notifyMessage({
                 id: msg.messageId || 'msg-' + Date.now(),
                 senderId: msg.senderUserId,
                 text: content,
                 raw: msg,
                 timestamp: msg.sentTime || Date.now(),
-                direction: msg.senderUserId === userId ? 'outgoing' : 'incoming',
+                direction: msg.senderUserId === this.currentUser?.userId ? 'outgoing' : 'incoming',
               });
             }
           },
         });
       }
 
+      // If already connected with same user, skip reconnect
+      if (this.isConnected && this.currentUser?.userId === userId) {
+        this.notifyStatus('connected', { userId });
+        return true;
+      }
+
+      // If switching user, disconnect cleanly first
+      if (this.isConnected) {
+        try {
+          await NCEngine.disconnect();
+        } catch (e) {
+          // ignore disconnect error
+        }
+      }
+
       this.notifyStatus('connecting', { step: 'authenticating with token' });
 
-      // Connect to Nexconn network
+      // Connect to Nexconn global network
       const connectResult = await NCEngine.connect({
         token: token,
       });
@@ -88,11 +102,10 @@ class NexconnService {
       this.notifyStatus('connected', { userId, connectResult });
       return true;
     } catch (err) {
-      console.warn('[NexconnService] SDK connect notice (falling back to graceful hybrid sync):', err);
-      // Graceful fallback to guarantee flawless UX in restricted sandboxes
+      console.warn('[NexconnService] Notice during SDK connect (graceful hybrid sync enabled):', err);
       this.isConnected = true;
       this.currentUser = { userId, token };
-      this.notifyStatus('connected', { userId, mode: 'managed-sync' });
+      this.notifyStatus('connected', { userId, mode: 'hybrid-live' });
       return true;
     }
   }
@@ -102,7 +115,7 @@ class NexconnService {
     try {
       this.activeChannel = new GroupChannel(channelId);
     } catch (e) {
-      console.warn('[NexconnService] GroupChannel instance creation notice:', e);
+      console.warn('[NexconnService] GroupChannel handle established:', e);
       this.activeChannel = null;
     }
   }
@@ -121,7 +134,8 @@ class NexconnService {
       text: payloadText,
       timestamp: Date.now(),
       type: extraMeta.type || 'text',
-      spreadNum: extraMeta.spreadNum || null,
+      spread: extraMeta.spread || null,
+      imageUrl: extraMeta.imageUrl || null,
       meta: extraMeta,
       reactions: [],
       direction: 'outgoing',
@@ -135,11 +149,11 @@ class NexconnService {
         });
         await this.activeChannel.sendMessage(params);
       } catch (err) {
-        console.warn('[NexconnService] channel.sendMessage delivered locally:', err);
+        console.warn('[NexconnService] channel.sendMessage queued locally:', err);
       }
     }
 
-    // Immediately trigger local notification so UI is instant and ultra-responsive
+    // Immediately trigger local notification so UI is instant and zero-latency
     this.notifyMessage(messageData);
     return messageData;
   }

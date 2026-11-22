@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header.jsx';
 import OrderSidebar from './components/OrderSidebar.jsx';
 import StoryChannelChat from './components/StoryChannelChat.jsx';
@@ -12,8 +12,14 @@ export default function App() {
   const [role, setRole] = useState('client'); // 'client' or 'designer'
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [session, setSession] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [orderMessages, setOrderMessages] = useState({});
   const [inspectingSpread, setInspectingSpread] = useState(null);
+
+  const roleRef = useRef(role);
+  roleRef.current = role;
+
+  const currentOrderRef = useRef(currentOrder);
+  currentOrderRef.current = currentOrder;
 
   // 1. Fetch orders on mount
   useEffect(() => {
@@ -28,7 +34,7 @@ export default function App() {
       .catch((err) => console.error('Failed to load sample orders:', err));
   }, []);
 
-  // 2. Setup session and connect to Nexconn Chat SDK
+  // 2. Setup session and connect to Nexconn Chat SDK when currentOrder changes
   useEffect(() => {
     if (!currentOrder) return;
 
@@ -39,14 +45,20 @@ export default function App() {
       try {
         setConnectionStatus('connecting');
 
+        const activeRole = roleRef.current;
+        const senderDisplayName =
+          activeRole === 'client'
+            ? currentOrder.clientName || 'Client'
+            : currentOrder.leadDesigner || 'Pooja (Lead Illustrator)';
+
         // Request token from our backend (which calls Nexconn Auth API)
         const res = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: role === 'client' ? currentOrder.clientName : 'Pooja (Lead Illustrator)',
+            name: senderDisplayName,
             orderId: currentOrder.orderId,
-            role: role,
+            role: activeRole,
             bookTitle: currentOrder.bookTitle,
           }),
         });
@@ -68,44 +80,62 @@ export default function App() {
 
         // Listen for new messages
         unsubscribeMsg = nexconn.onMessage((newMsg) => {
-          setMessages((prev) => {
-            // avoid duplicate id
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
+          const ordId = currentOrderRef.current?.orderId;
+          if (!ordId) return;
+
+          setOrderMessages((prevMap) => {
+            const list = prevMap[ordId] || [];
+            if (list.some((m) => m.id === newMsg.id)) return prevMap;
+            return {
+              ...prevMap,
+              [ordId]: [...list, newMsg],
+            };
           });
         });
 
-        // Seed initial rich story context for the order
-        const seedMessages = [
-          {
-            id: 'seed-1',
-            senderName: 'Meera (Client)',
-            role: 'client',
-            text: `Hi Pooja! We've uploaded all photos for ${currentOrder.bookTitle}. Especially excited about the morning raga scene with Kabir and his grandfather!`,
-            timestamp: Date.now() - 3600000 * 4,
-            read: true,
-          },
-          {
-            id: 'seed-2',
-            senderName: 'Pooja (Lead Illustrator)',
-            role: 'designer',
-            text: `Welcome Meera & Rohan! The photos of Kabir at Cubbon Park and by the French window are heartwarming. I've finished the watercolor proof for Spread 2 below:`,
-            timestamp: Date.now() - 3600000 * 2,
-            spread: currentOrder.activeDrafts?.[1] || currentOrder.activeDrafts?.[0],
-            read: true,
-          },
-          {
-            id: 'seed-3',
-            senderName: 'ChapterBot AI',
-            role: 'ai',
-            type: 'ai_summary',
-            text: `📌 Story Milestone: Spread 1 approved. Spread 2 proof is currently open for family review. You can react or click 'Approve for Print' once ready.`,
-            timestamp: Date.now() - 3600000,
-            read: true,
-          },
-        ];
+        // Seed initial rich story context for the order if not already initialized
+        setOrderMessages((prevMap) => {
+          if (prevMap[currentOrder.orderId] && prevMap[currentOrder.orderId].length > 0) {
+            return prevMap;
+          }
 
-        setMessages(seedMessages);
+          const seedSpread =
+            currentOrder.activeDrafts?.[1] || currentOrder.activeDrafts?.[0] || null;
+
+          const seedMessages = [
+            {
+              id: `seed-1-${currentOrder.orderId}`,
+              senderName: `${currentOrder.clientName} (Client)`,
+              role: 'client',
+              text: `Hi Pooja! We've uploaded all photos for ${currentOrder.bookTitle}. Especially excited about the morning raga scene with grandfather!`,
+              timestamp: Date.now() - 3600000 * 4,
+              read: true,
+            },
+            {
+              id: `seed-2-${currentOrder.orderId}`,
+              senderName: currentOrder.leadDesigner || 'Pooja (Lead Illustrator)',
+              role: 'designer',
+              text: `Welcome! The reference photos are heartwarming. I've finished the watercolor proof for Spread ${seedSpread ? seedSpread.spreadNum : 1} below for your review:`,
+              timestamp: Date.now() - 3600000 * 2,
+              spread: seedSpread,
+              read: true,
+            },
+            {
+              id: `seed-3-${currentOrder.orderId}`,
+              senderName: 'ChapterBot AI',
+              role: 'ai',
+              type: 'ai_summary',
+              text: `📌 Story Milestone: Spread 1 approved. Spread ${seedSpread ? seedSpread.spreadNum : 2} proof is currently open for family review. You can react or click 'Approve for Print' once ready.`,
+              timestamp: Date.now() - 3600000,
+              read: true,
+            },
+          ];
+
+          return {
+            ...prevMap,
+            [currentOrder.orderId]: seedMessages,
+          };
+        });
       } catch (err) {
         console.error('Session initialization error:', err);
       }
@@ -117,25 +147,44 @@ export default function App() {
       if (unsubscribeMsg) unsubscribeMsg();
       if (unsubscribeStatus) unsubscribeStatus();
     };
-  }, [currentOrder?.orderId, role]);
+  }, [currentOrder?.orderId]);
 
-  // 3. Handle sending new messages
-  const handleSendMessage = async (text) => {
-    if (!text.trim()) return;
+  // Current active messages for this order
+  const messages = (currentOrder && orderMessages[currentOrder.orderId]) || [];
 
-    const senderName = role === 'client' ? currentOrder?.clientName || 'Meera' : 'Pooja (Lead Illustrator)';
+  // 3. Handle sending new text message
+  const handleSendMessage = async (text, extra = {}) => {
+    if (!text.trim() || !currentOrder) return;
+
+    const senderName =
+      role === 'client'
+        ? currentOrder.clientName || 'Meera'
+        : currentOrder.leadDesigner || 'Pooja (Lead Illustrator)';
 
     await nexconn.sendTextMessage(text, {
       senderName,
       role,
-      orderId: currentOrder?.orderId,
+      orderId: currentOrder.orderId,
+      ...extra,
     });
   };
 
-  // 4. Handle reacting to messages
+  // 4. Handle sending photo
+  const handleSendPhoto = async (imageUrl, caption) => {
+    if (!currentOrder) return;
+    await handleSendMessage(caption || 'Shared reference memory photo for our storybook.', {
+      imageUrl,
+      type: 'photo_share',
+    });
+  };
+
+  // 5. Handle reacting to messages
   const handleReact = (messageId, emoji) => {
-    setMessages((prev) =>
-      prev.map((m) => {
+    if (!currentOrder) return;
+
+    setOrderMessages((prevMap) => {
+      const list = prevMap[currentOrder.orderId] || [];
+      const updatedList = list.map((m) => {
         if (m.id === messageId) {
           const reactions = m.reactions || [];
           const existing = reactions.find((r) => r.emoji === emoji);
@@ -150,26 +199,39 @@ export default function App() {
           return { ...m, reactions: updatedReactions };
         }
         return m;
-      })
-    );
-  };
+      });
 
-  // 5. Handle approving a spread
-  const handleApproveSpread = (spreadNum) => {
-    // Update local order state
-    setCurrentOrder((prev) => {
-      if (!prev) return prev;
-      const approved = new Set(prev.approvedSpreads || []);
-      approved.add(spreadNum);
-      const drafts = (prev.activeDrafts || []).map((d) =>
-        d.spreadNum === spreadNum ? { ...d, status: 'approved' } : d
-      );
       return {
-        ...prev,
-        approvedSpreads: Array.from(approved),
-        activeDrafts: drafts,
+        ...prevMap,
+        [currentOrder.orderId]: updatedList,
       };
     });
+  };
+
+  // 6. Handle approving a spread
+  const handleApproveSpread = (spreadNum) => {
+    if (!currentOrder) return;
+
+    const approvedSet = new Set(currentOrder.approvedSpreads || []);
+    approvedSet.add(spreadNum);
+    const updatedApproved = Array.from(approvedSet);
+
+    const updatedDrafts = (currentOrder.activeDrafts || []).map((d) =>
+      d.spreadNum === spreadNum ? { ...d, status: 'approved' } : d
+    );
+
+    const updatedOrder = {
+      ...currentOrder,
+      approvedSpreads: updatedApproved,
+      activeDrafts: updatedDrafts,
+    };
+
+    setCurrentOrder(updatedOrder);
+
+    // Also update orders directory list
+    setOrders((prevOrders) =>
+      prevOrders.map((o) => (o.orderId === currentOrder.orderId ? updatedOrder : o))
+    );
 
     // Send announcement to chat
     handleSendMessage(
@@ -177,8 +239,9 @@ export default function App() {
     );
   };
 
-  // 6. Handle AI summary addition to chat
+  // 7. Handle AI summary addition to chat
   const handlePostAiSummary = (aiData) => {
+    if (!currentOrder) return;
     const summaryMsg = {
       id: 'ai-post-' + Date.now(),
       senderName: 'ChapterBot AI',
@@ -188,7 +251,11 @@ export default function App() {
       timestamp: Date.now(),
       read: true,
     };
-    setMessages((prev) => [...prev, summaryMsg]);
+
+    setOrderMessages((prevMap) => ({
+      ...prevMap,
+      [currentOrder.orderId]: [...(prevMap[currentOrder.orderId] || []), summaryMsg],
+    }));
   };
 
   return (
@@ -216,6 +283,7 @@ export default function App() {
         <StoryChannelChat
           messages={messages}
           onSendMessage={handleSendMessage}
+          onSendPhoto={handleSendPhoto}
           onReact={handleReact}
           onApproveSpread={handleApproveSpread}
           onInspectSpread={(draft) => setInspectingSpread(draft)}

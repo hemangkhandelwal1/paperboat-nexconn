@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Paperboat — a neighborhood help harbor built on the Nexconn Chat SDK",
+  "description": "ChapterChat — real-time keepsake storybook studio hub powered by Nexconn Chat SDK for thechapterco.in",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"node server/index.js\"",
     "dev:web": "vite",

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 export default function StoryChannelChat({
   messages,
   onSendMessage,
+  onSendPhoto,
   onReact,
   onApproveSpread,
   onInspectSpread,
@@ -10,7 +11,6 @@ export default function StoryChannelChat({
   role,
 }) {
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -29,9 +29,11 @@ export default function StoryChannelChat({
   const quickPrompts = [
     { label: '❤️ Love Spread 2 watercolor colors!', text: 'The watercolor rendering for Spread 2 is lovely! Can we just soften Kabir’s curls slightly?' },
     { label: '✅ Approve Spread 2 for print', text: '✅ Spread 2 looks completely wonderful! We officially approve this spread for final print.' },
-    { label: '📸 Upload birthday morning reference', text: 'Attached reference photo: Kabir’s red party hat from his morning puja.' },
+    { label: '📸 Upload birthday morning reference', photo: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80', caption: 'Reference photo: Kabir playing in theIndiranagar living room with Dadaji.' },
     { label: '💬 Text tweak on Spread 3', text: 'For Spread 3, could Nani’s lullaby be italicized at the bottom left corner?' },
   ];
+
+  const availableEmojis = ['❤️', '👍', '🎨', '✨', '🔄'];
 
   return (
     <section className="chat-stage">
@@ -55,7 +57,7 @@ export default function StoryChannelChat({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Active Role: <strong style={{ color: 'var(--brand-terracotta)' }}>{role === 'client' ? 'Client' : 'Lead Illustrator'}</strong>
+            Speaking as: <strong style={{ color: 'var(--brand-terracotta)' }}>{role === 'client' ? 'Client (Family)' : 'Lead Illustrator'}</strong>
           </span>
         </div>
       </div>
@@ -63,18 +65,19 @@ export default function StoryChannelChat({
       {/* Message Stream */}
       <div className="message-stream" ref={scrollRef}>
         {messages.map((msg) => {
-          const isOutgoing = msg.direction === 'outgoing' || (role === 'client' && msg.role === 'client') || (role === 'designer' && msg.role === 'designer');
-          const isDesigner = msg.role === 'designer';
           const isAi = msg.type === 'ai_summary' || msg.senderName === 'ChapterBot AI';
+          const isOutgoing = !isAi && ((role === 'client' && msg.role === 'client') || (role === 'designer' && msg.role === 'designer'));
+          const isDesigner = msg.role === 'designer';
 
           return (
             <div
               key={msg.id}
               className={`msg-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`}
+              style={isAi ? { alignSelf: 'center', maxWidth: '92%', width: '100%' } : {}}
             >
               <div className="msg-header">
                 <span style={{ fontWeight: '600', color: isDesigner ? 'var(--brand-terracotta)' : isAi ? '#9c6c19' : 'var(--text-ink)' }}>
-                  {msg.senderName || (isDesigner ? 'Pooja (Lead Illustrator)' : isAi ? 'ChapterBot AI' : 'Meera (Client)')}
+                  {msg.senderName || (isDesigner ? 'Pooja (Lead Illustrator)' : isAi ? 'ChapterBot AI' : 'Client')}
                 </span>
                 <span>•</span>
                 <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -83,10 +86,18 @@ export default function StoryChannelChat({
 
               <div
                 className={`msg-content-card ${isDesigner ? 'designer-card' : ''} ${isAi ? 'ai-card' : ''}`}
+                style={{ position: 'relative' }}
               >
                 <div>{msg.text}</div>
 
-                {/* If message has an attached spread image */}
+                {/* If message has an uploaded photo */}
+                {msg.imageUrl && (
+                  <div style={{ marginTop: '10px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-linen)', maxWidth: '320px' }}>
+                    <img src={msg.imageUrl} alt="Uploaded reference" style={{ width: '100%', display: 'block', maxHeight: '200px', objectFit: 'cover' }} />
+                  </div>
+                )}
+
+                {/* If message has an attached spread proof */}
                 {msg.spread && (
                   <div className="spread-chat-preview">
                     <img
@@ -132,24 +143,52 @@ export default function StoryChannelChat({
                   </div>
                 )}
 
-                {/* Reactions list */}
-                {msg.reactions && msg.reactions.length > 0 && (
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                    {msg.reactions.map((r, i) => (
-                      <span
-                        key={i}
+                {/* Reactions display & Quick Reaction Picker */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', paddingTop: '6px', borderTop: '1px dashed #eae2d3' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {msg.reactions && msg.reactions.length > 0 ? (
+                      msg.reactions.map((r, i) => (
+                        <span
+                          key={i}
+                          onClick={() => onReact(msg.id, r.emoji)}
+                          style={{
+                            background: 'rgba(0,0,0,0.05)',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {r.emoji} {r.count}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>React:</span>
+                    )}
+                  </div>
+
+                  {/* Reaction quick emojis */}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {availableEmojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => onReact(msg.id, emoji)}
                         style={{
-                          background: 'rgba(0,0,0,0.05)',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
                           fontSize: '12px',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          background: 'transparent',
+                          transition: 'transform 0.15s ease',
                         }}
+                        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.25)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                        title={`React with ${emoji}`}
                       >
-                        {r.emoji} {r.count}
-                      </span>
+                        {emoji}
+                      </button>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           );
@@ -160,12 +199,18 @@ export default function StoryChannelChat({
       <div className="chat-input-container">
         {/* Quick prompt suggestions */}
         <div className="quick-prompts-row">
-          <span style={{ fontSize: '11px', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>Quick notes:</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>Quick actions:</span>
           {quickPrompts.map((p, idx) => (
             <button
               key={idx}
               className="quick-prompt-pill"
-              onClick={() => onSendMessage(p.text)}
+              onClick={() => {
+                if (p.photo) {
+                  onSendPhoto(p.photo, p.caption);
+                } else {
+                  onSendMessage(p.text);
+                }
+              }}
             >
               {p.label}
             </button>
@@ -174,6 +219,31 @@ export default function StoryChannelChat({
 
         {/* Input box */}
         <form onSubmit={handleSubmit} className="input-box-row">
+          <button
+            type="button"
+            onClick={() => {
+              onSendPhoto(
+                'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+                'Uploaded reference memory photo: Living room celebration.'
+              );
+            }}
+            title="Attach a memory photo"
+            style={{
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-linen)',
+              background: 'var(--bg-parchment)',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-muted)',
+            }}
+          >
+            <span>📸</span>
+            <span style={{ fontSize: '12px' }}>Photo</span>
+          </button>
+
           <input
             type="text"
             className="chat-input-field"

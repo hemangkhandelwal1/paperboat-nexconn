@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 export default function AiAssistantSidebar({ currentOrder, messages, onPostAiSummary }) {
   const [loading, setLoading] = useState(false);
   const [aiBrief, setAiBrief] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const generateSummary = async () => {
     setLoading(true);
@@ -25,6 +26,14 @@ export default function AiAssistantSidebar({ currentOrder, messages, onPostAiSum
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyBrief = () => {
+    if (!aiBrief) return;
+    const text = `The Chapter Co. — Illustrator Brief for ${aiBrief.bookTitle} (${aiBrief.orderId})\n\nSummary: ${aiBrief.summary}\n\nAction Items:\n${(aiBrief.actionItems || []).map((item, i) => `${i + 1}. [Spread ${item.spread} - ${item.category} (${item.priority})]: ${item.action}`).join('\n')}`;
+    navigator.clipboard?.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -81,14 +90,25 @@ export default function AiAssistantSidebar({ currentOrder, messages, onPostAiSum
       <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
         {aiBrief ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
                 Executive Brief
               </span>
-              <p style={{ fontSize: '13px', color: 'var(--text-ink)', marginTop: '4px', lineHeight: '1.45' }}>
-                {aiBrief.summary}
-              </p>
+              <button
+                onClick={copyBrief}
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--brand-terracotta)',
+                  fontWeight: '600',
+                  background: 'transparent',
+                }}
+              >
+                {copied ? '✓ Copied!' : '📋 Copy Brief'}
+              </button>
             </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-ink)', lineHeight: '1.45' }}>
+              {aiBrief.summary}
+            </p>
 
             <div>
               <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
